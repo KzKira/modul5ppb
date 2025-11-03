@@ -274,8 +274,8 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
       updateData.ingredients = validIngredients;
       updateData.steps = validSteps;
 
-      // Step 3: Update recipe using PUT
-      const result = await recipeService.updateRecipe(recipeId, updateData);
+  // Step 3: Partially update recipe (patch) to avoid overwriting unspecified fields
+  const result = await recipeService.patchRecipe(recipeId, updateData);
 
       if (result.success) {
         alert('Resep berhasil diperbarui!');

@@ -201,13 +201,14 @@ export default function RecipeDetail({ recipeId, onBack, onEdit, category = 'mak
             <img
               src={recipe.image_url}
               alt={recipe.name}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* Favorite Button - Use component */}
             <div className="absolute top-4 right-4 z-10">
-              <FavoriteButton recipeId={recipeId} size="lg" />
+              <FavoriteButton recipeId={recipeId} size="lg" isFavorited={isFavorited} onServerToggle={toggleFavorite} />
             </div>
 
             {/* Category Badge */}
@@ -216,6 +217,29 @@ export default function RecipeDetail({ recipeId, onBack, onEdit, category = 'mak
                 {category === 'makanan' ? 'Makanan' : 'Minuman'}
               </span>
             </div>
+          </div>
+
+          {/* Share Button - copies deep link */}
+          <div className="max-w-5xl mx-auto px-4 py-2 flex justify-end">
+            <button
+              onClick={async () => {
+                try {
+                  const url = new URL(window.location.href);
+                  // Use query params for deep link
+                  url.searchParams.set('mode', 'detail');
+                  url.searchParams.set('recipeId', recipeId);
+                  url.searchParams.set('category', category);
+                  await navigator.clipboard.writeText(url.toString());
+                  alert('Link resep disalin ke clipboard');
+                } catch (err) {
+                  console.error(err);
+                  alert('Gagal menyalin link');
+                }
+              }}
+              className="px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200"
+            >
+              Bagikan
+            </button>
           </div>
 
           {/* Recipe Info */}
