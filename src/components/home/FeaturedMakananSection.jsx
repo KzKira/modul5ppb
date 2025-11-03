@@ -95,11 +95,17 @@ export default function FeaturedMakananSection({ recipes, loading, error, onReci
               
               {/* Recipe Image*/}
               <div className="relative h-32 md:h-56 overflow-hidden">
-                <img 
-                  src={recipe.image_url}
-                  alt={recipe.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
+                {recipe.image_url && typeof recipe.image_url === 'string' && recipe.image_url.trim() !== '' ? (
+                  <img 
+                    src={recipe.image_url}
+                    alt={recipe.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-b from-white to-slate-200 flex items-end p-3">
+                    <div className="text-sm text-slate-500">Tidak ada gambar</div>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
               

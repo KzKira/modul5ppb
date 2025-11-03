@@ -74,7 +74,7 @@ export default function RecipeGrid({ recipes, onRecipeClick }) {
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative h-32 md:h-56 overflow-hidden">
                 <img
-                  src={visibleCards.has(index) ? recipe.image_url : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
+                  src={(visibleCards.has(index) && recipe.image_url && typeof recipe.image_url === 'string' && recipe.image_url.trim() !== '') ? recipe.image_url : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
                   data-src={recipe.image_url}
                   alt={recipe.name}
                   loading="lazy"

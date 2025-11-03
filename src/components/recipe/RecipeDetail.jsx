@@ -198,12 +198,18 @@ export default function RecipeDetail({ recipeId, onBack, onEdit, category = 'mak
         <div className="bg-white/60 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl border border-white/40 mb-8">
           {/* Hero Image */}
           <div className="relative h-64 md:h-96 overflow-hidden">
-            <img
-              src={recipe.image_url}
-              alt={recipe.name}
-              loading="lazy"
-              className="w-full h-full object-cover"
-            />
+            {recipe.image_url && typeof recipe.image_url === 'string' && recipe.image_url.trim() !== '' ? (
+              <img
+                src={recipe.image_url}
+                alt={recipe.name}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-b from-white to-slate-200 flex items-end p-4">
+                <div className="text-sm text-slate-500">Tidak ada gambar</div>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* Favorite Button - Use component */}

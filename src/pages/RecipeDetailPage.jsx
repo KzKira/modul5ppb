@@ -100,11 +100,17 @@ export default function RecipeDetailPage({ recipeId, onBack }) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Recipe Image */}
         <div className="mb-8">
-          <img
-            src={recipe.image_url}
-            alt={recipe.name}
-            className="w-full h-96 object-cover rounded-2xl shadow-lg"
-          />
+          {recipe.image_url && typeof recipe.image_url === 'string' && recipe.image_url.trim() !== '' ? (
+            <img
+              src={recipe.image_url}
+              alt={recipe.name}
+              className="w-full h-96 object-cover rounded-2xl shadow-lg"
+            />
+          ) : (
+            <div className="w-full h-96 rounded-2xl shadow-lg bg-gradient-to-b from-white to-slate-200 flex items-end p-6">
+              <div className="text-slate-500">Tidak ada gambar untuk resep ini</div>
+            </div>
+          )}
         </div>
 
         {/* Recipe Header */}

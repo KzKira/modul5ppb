@@ -96,11 +96,17 @@ export default function FeaturedMinumanSection({ recipes, loading, error, onReci
               <div className="flex">
                 {/* Recipe Image */}
                 <div className="h-29 w-28 md:h-48 md:w-48 flex-shrink-0 overflow-hidden">
-                  <img 
-                    src={recipe.image_url}
-                    alt={recipe.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {recipe.image_url && typeof recipe.image_url === 'string' && recipe.image_url.trim() !== '' ? (
+                    <img 
+                      src={recipe.image_url}
+                      alt={recipe.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-b from-white to-slate-200 flex items-end p-3">
+                      <div className="text-sm text-slate-500">Tidak ada gambar</div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="relative z-10 p-4 md:p-8 flex-1 flex flex-col justify-center">

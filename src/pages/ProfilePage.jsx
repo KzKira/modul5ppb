@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import userService from '../services/userService';
 import FavoriteButton from '../components/common/FavoriteButton';
+import ApiEndpointButton from '../components/common/ApiEndpointButton';
 import { ResepMakanan } from '../data/makanan';
 import { ResepMinuman } from '../data/minuman';
 import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
@@ -95,7 +96,23 @@ export default function ProfilePage({ onRecipeClick }) {
 
   const favoriteIdSet = new Set([...serverIds, ...localIds]);
 
-  const favoriteRecipes = allRecipes.filter((r) => favoriteIdSet.has(r.id));
+  // If server returns full favorite recipe objects, prefer rendering them directly.
+  const favoriteRecipes = (serverFavorites && serverFavorites.length > 0)
+    ? serverFavorites
+    : allRecipes.filter((r) => favoriteIdSet.has(r.id));
+
+  // Debug helpers (temporary) to inspect favorite shapes in runtime
+  const [showDebug, setShowDebug] = useState(false);
+  const localRaw = (() => {
+    try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch (e) { return null; }
+  })();
+  const debugInfo = {
+    serverFavorites: serverFavorites || null,
+    localFavoritesRaw: localRaw,
+    normalizedIds: Array.from(favoriteIdSet),
+    favoriteRecipesFound: favoriteRecipes.map(r => ({ id: r.id, name: r.name })),
+    allRecipeIds: allRecipes.map(r => r.id).slice(0, 30),
+  };
 
   const handleFavoriteToggle = () => {
     // Refresh local fallback and server favorites
@@ -141,6 +158,10 @@ export default function ProfilePage({ onRecipeClick }) {
                 <div className="text-sm text-slate-500">ID: {profile.userId}</div>
                 <div className="mt-2 text-sm text-slate-600 max-w-md">{profile.bio || 'Belum ada bio. Klik edit untuk menambahkan.'}</div>
               </div>
+
+              <div className="mt-4">
+                <ApiEndpointButton />
+              </div>
             </div>
 
             <div className="ml-auto flex items-center gap-3">
@@ -176,23 +197,40 @@ export default function ProfilePage({ onRecipeClick }) {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">Resep Favorit</h2>
 
+          <div className="mb-4 flex items-center gap-3">
+            <button onClick={() => setShowDebug(s => !s)} className="px-3 py-1 text-sm bg-slate-100 rounded-md">Toggle Debug</button>
+            <div className="text-sm text-slate-500">Favorit ditemukan: {favoriteRecipes.length}</div>
+          </div>
+
+          {showDebug && (
+            <pre className="mb-4 p-4 bg-slate-50 border rounded text-xs overflow-auto max-h-40">{JSON.stringify(debugInfo, null, 2)}</pre>
+          )}
+
           {favoriteRecipes.length === 0 ? (
             <div className="text-slate-500">Anda belum menandai resep sebagai favorit. Jelajahi resep dan klik ikon hati untuk menambah favorit.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {favoriteRecipes.map((r) => {
-                const isMakanan = Object.values(ResepMakanan.resep || {}).some(x => x.id === r.id);
+                // determine category and navigation behavior
+                const isServerRecipe = !!(serverFavorites && serverFavorites.length > 0);
+                const category = isServerRecipe ? (r.category || 'makanan') : (Object.values(ResepMakanan.resep || {}).some(x => x.id === r.id) ? 'makanan' : 'minuman');
                 return (
-                  <div key={`${r.id}-${r.name}`} className="bg-white/5 rounded-2xl overflow-hidden border shadow-sm cursor-pointer" onClick={() => onRecipeClick && onRecipeClick(r.id, isMakanan ? 'makanan' : 'minuman')}>
+                  <div key={`${r.id}-${r.name}`} className="bg-white/5 rounded-2xl overflow-hidden border shadow-sm cursor-pointer" onClick={() => onRecipeClick && onRecipeClick(r.id, category)}>
                     <div className="relative h-36 overflow-hidden">
-                      <img loading="lazy" src={r.image_url} alt={r.name} className="w-full h-full object-cover" />
+                      {r.image_url && typeof r.image_url === 'string' && r.image_url.trim() !== '' ? (
+                        <img loading="lazy" src={r.image_url} alt={r.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-b from-white to-slate-200 flex items-end p-3">
+                          <div className="text-sm text-slate-500">Tidak ada gambar</div>
+                        </div>
+                      )}
                       <div className="absolute top-3 right-3 z-10">
-                        <FavoriteButton recipeId={r.id} onServerToggle={toggleFavorite} isFavorited={favoriteIdsEffective.includes(r.id)} onToggle={handleFavoriteToggle} size="sm" />
+                        <FavoriteButton recipeId={r.id} onServerToggle={toggleFavorite} isFavorited={favoriteIdSet.has(r.id)} onToggle={handleFavoriteToggle} size="sm" />
                       </div>
                     </div>
                     <div className="p-3">
                       <div className="font-semibold text-slate-800 line-clamp-2">{r.name}</div>
-                      <div className="text-xs text-slate-500 mt-1">{isMakanan ? 'Makanan' : 'Minuman'}</div>
+                      <div className="text-xs text-slate-500 mt-1">{category === 'makanan' ? 'Makanan' : 'Minuman'}</div>
                     </div>
                   </div>
                 );

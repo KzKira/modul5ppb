@@ -274,8 +274,10 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
       updateData.ingredients = validIngredients;
       updateData.steps = validSteps;
 
-  // Step 3: Partially update recipe (patch) to avoid overwriting unspecified fields
-  const result = await recipeService.patchRecipe(recipeId, updateData);
+  // Step 3: Update recipe
+  // NOTE: Some servers block PATCH in CORS preflight responses. Use PUT (full update)
+  // because `updateData` here contains all fields we intend to set.
+  const result = await recipeService.updateRecipe(recipeId, updateData);
 
       if (result.success) {
         alert('Resep berhasil diperbarui!');
@@ -288,7 +290,26 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
         throw new Error(result.message || 'Gagal memperbarui resep');
       }
     } catch (err) {
-      setError(err.message || 'Terjadi kesalahan saat memperbarui resep');
+      // Try to extract meaningful message from various error shapes
+      let message = 'Terjadi kesalahan saat memperbarui resep';
+      try {
+        if (!err) {
+          message = 'Unknown error';
+        } else if (typeof err === 'string') {
+          message = err;
+        } else if (err.message) {
+          message = err.message;
+        } else if (err.data && err.data.message) {
+          message = err.data.message;
+        } else if (err.error) {
+          message = err.error;
+        } else {
+          message = JSON.stringify(err);
+        }
+      } catch (e) {
+        message = 'Terjadi kesalahan saat memproses pesan error';
+      }
+      setError(message);
     } finally {
       setUpdating(false);
       setUploading(false);

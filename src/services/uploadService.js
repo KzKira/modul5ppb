@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { BASE_URL } from '../config/api';
+import { apiClient, BASE_URL } from '../config/api';
 
 class UploadService {
   /**
@@ -30,17 +29,32 @@ class UploadService {
       const formData = new FormData();
       formData.append('image', file);
 
-      // Upload to server
-      const response = await axios.post(`${BASE_URL}/api/v1/upload`, formData, {
+      // Upload to server via shared apiClient so baseURL and interceptors are consistent
+      // Note: apiClient's default Content-Type is application/json, so override per-request
+      // Log start of upload for debugging
+      // eslint-disable-next-line no-console
+      console.log('[upload] start upload to', BASE_URL ? `${BASE_URL}/api/v1/upload` : '/api/v1/upload');
+
+      const response = await apiClient.post('/api/v1/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         timeout: 30000, // 30 seconds for upload
       });
 
-      return response.data;
+      // apiClient interceptor returns response.data already
+      // eslint-disable-next-line no-console
+      console.log('[upload] upload success', response);
+      return response;
     } catch (error) {
-      throw error;
+      // Log error for debugging and rethrow a normalized error object
+      // eslint-disable-next-line no-console
+      console.error('[upload] upload error', error);
+      // Normalize common axios/network error shapes
+      if (!error || !error.message) {
+        throw { message: 'Unknown upload error', original: error };
+      }
+      throw { message: error.message || 'Upload failed', original: error };
     }
   }
 }
