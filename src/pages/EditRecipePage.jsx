@@ -57,9 +57,14 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
           let stepsArray = [''];
           if (recipe.steps && recipe.steps.length > 0) {
             stepsArray = recipe.steps.map(step => {
-              // If step is an object with a 'step' property, extract it
-              if (typeof step === 'object' && step.step) {
-                return step.step;
+              // If step is an object, try several known properties
+              if (typeof step === 'object') {
+                // common server shapes: { instruction } or { step }
+                if (typeof step.instruction === 'string') return step.instruction;
+                if (typeof step.step === 'string') return step.step;
+                // fallback to any string-y property
+                const vals = Object.values(step).filter(v => typeof v === 'string');
+                return vals.length > 0 ? vals[0] : '';
               }
               // If step is already a string, use it
               return typeof step === 'string' ? step : '';
@@ -247,21 +252,6 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
 
       // Step 2: Add other fields
       const validIngredients = ingredients.filter(ing => ing.name.trim() && ing.quantity.trim());
-      const validSteps = steps.filter(step => {
-        if (typeof step === 'string') {
-          return step.trim();
-        }
-        if (typeof step === 'object' && step.step) {
-          return step.step.trim();
-        }
-        return false;
-      }).map(step => {
-        // Convert to string if it's an object
-        if (typeof step === 'object' && step.step) {
-          return step.step;
-        }
-        return step;
-      });
 
       updateData.name = formData.name.trim();
       updateData.category = formData.category;
@@ -271,8 +261,26 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
       updateData.servings = parseInt(formData.servings);
       updateData.difficulty = formData.difficulty;
       updateData.is_featured = formData.is_featured;
-      updateData.ingredients = validIngredients;
-      updateData.steps = validSteps;
+
+  const validSteps = steps.filter(step => typeof step === 'string' ? step.trim() : false).map(s => s.trim());
+  updateData.ingredients = validIngredients;
+  // Use same shape as CreateRecipePage (array of strings) to match backend expectations
+  updateData.steps = validSteps;
+
+      // Ensure image_url is always included for PUT (full replace). If user didn't upload new image and
+      // original image still exists, keep it.
+      if (!('image_url' in updateData)) {
+        if (currentImageUrl && currentImageUrl.trim() !== '') {
+          updateData.image_url = currentImageUrl;
+        } else if (!currentImageUrl && !imageFile) {
+          // explicit empty to remove image
+          updateData.image_url = '';
+        }
+      }
+
+      // Log payload for debugging
+      // eslint-disable-next-line no-console
+      console.log('[edit] updateData payload:', JSON.stringify(updateData, null, 2));
 
   // Step 3: Update recipe
   // NOTE: Some servers block PATCH in CORS preflight responses. Use PUT (full update)
